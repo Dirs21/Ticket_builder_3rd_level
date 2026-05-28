@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>3rd Level Ticket Builder</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#1a1a1a;color:#e0e0e0;padding:1rem}
+.tabs{display:flex;gap:4px;border-bottom:1px solid #333;padding:0 0 0;flex-wrap:wrap;margin-bottom:0}
+.tab{padding:8px 13px;font-size:12px;border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;color:#999;background:transparent;font-family:inherit}
+.tab:hover{background:#2a2a2a;color:#e0e0e0}
+.tab.active{background:#1a1a1a;border-color:#444;color:#fff;font-weight:600;position:relative;bottom:-1px}
+.content{padding:1.25rem 0}
+.slabel{font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;margin-top:1.25rem}
+.slabel:first-child{margin-top:0}
+textarea{width:100%;min-height:90px;resize:vertical;font-size:13px;padding:9px 11px;border:1px solid #333;border-radius:6px;background:#252525;color:#e0e0e0;font-family:inherit;line-height:1.6}
+textarea:focus,input[type=text]:focus{outline:none;border-color:#555}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.full{grid-column:span 2}
+input[type=text]{width:100%;padding:7px 11px;font-size:13px;border:1px solid #333;border-radius:6px;background:#252525;color:#e0e0e0;font-family:inherit}
+.fl{font-size:12px;color:#888;margin-bottom:3px}
+.tc{display:none}
+.tc.active{display:block}
+.btn-row{display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap}
+button.pri{background:#e0e0e0;color:#1a1a1a;border:none;padding:9px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600}
+button.pri:hover{background:#fff}
+button.sec{background:transparent;color:#e0e0e0;border:1px solid #444;padding:9px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit}
+button.sec:hover{background:#2a2a2a}
+button.hs{background:transparent;color:#ff7a59;border:1px solid #ff7a59;padding:9px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit}
+button.hs:hover{background:#2a1a15}
+button.hs:disabled{opacity:0.4;cursor:not-allowed}
+.hint{font-size:11px;color:#555;margin-top:8px}
+.yn{display:flex;gap:6px;flex-wrap:wrap}
+.yn button{padding:5px 12px;font-size:12px;border:1px solid #444;border-radius:6px;cursor:pointer;background:transparent;color:#888;font-family:inherit;transition:all 0.1s}
+.yn button:hover{border-color:#666;color:#ccc}
+.divider{border:none;border-top:1px solid #2a2a2a;margin:1rem 0}
+.output-box{margin-top:1.25rem;padding:1rem;border:1px solid #333;border-radius:6px;background:#111;font-size:13px;line-height:1.7;display:none;white-space:pre-wrap;word-break:break-word}
+.output-box.visible{display:block}
+.copy-btn{margin-top:8px;padding:6px 14px;font-size:12px;background:#333;color:#ccc;border:1px solid #444;border-radius:6px;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#444}
+h1{font-size:16px;font-weight:600;color:#fff;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid #333}
+.warn{border-color:#f59e0b !important;background:#2a2000 !important;}
+.warn-msg{font-size:11px;color:#f59e0b;margin-top:4px;display:none}
+.warn-msg.visible{display:block}
+.validation-banner{background:#2a2000;border:1px solid #f59e0b;border-radius:6px;padding:10px 14px;font-size:12px;color:#f59e0b;margin-top:12px;display:none}
+.validation-banner.visible{display:block}
+</style>
+</head>
+<body>
+<h1>3rd Level Ticket Builder</h1>
+
+<div class="tabs">
+  <button class="tab active" onclick="sw('pms')">PMS</button>
+  <button class="tab" onclick="sw('pmsres')">PMS Reservation</button>
+  <button class="tab" onclick="sw('overbooking')">Overbooking</button>
+  <button class="tab" onclick="sw('payment')">Payment</button>
+  <button class="tab" onclick="sw('ota')">OTA</button>
+  <button class="tab" onclick="sw('one')">ONE</button>
+  <button class="tab" onclick="sw('meta')">Meta</button>
+  <button class="tab" onclick="sw('bugfix')">Bugfix</button>
+  <button class="tab" onclick="sw('cockpit')">Cockpit</button>
+  <button class="tab" onclick="sw('custom')">Neu</button>
+</div>
+
+<div class="content">
+
+  <!-- PMS -->
+  <div class="tc active" id="tc-pms">
+    <div class="slabel">Context</div>
+    <div class="grid">
+      <div><div class="fl">KNR / Service Level</div><input type="text" id="pms-knr" placeholder="z.B. 12345 / SLB"/></div>
+      <div><div class="fl">PMS Version</div><input type="text" id="pms-ver" placeholder="V2 / V3"/></div>
+      <div><div class="fl">Modules / Environment</div><input type="text" id="pms-env" spellcheck="true" lang="de"/></div>
+      <div><div class="fl">Bearbeiter (2nd Level)</div><input type="text" id="pms-agent" placeholder="z.B. Rahm"/></div>
+    </div>
+    <div class="slabel">Problem</div>
+    <textarea id="pms-problem" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Expectation</div>
+    <div class="grid">
+      <div><div class="fl">Value should be in PMS</div><input type="text" id="pms-valpms"/></div>
+      <div><div class="fl">Value should be in Cockpit</div><input type="text" id="pms-valcockpit"/></div>
+      <div class="full"><div class="fl">What should actually be happening?</div><input type="text" id="pms-expect" spellcheck="true" lang="de" placeholder="Was sollte stattdessen passieren? / Erwartetes Verhalten beschreiben..."/></div>
+    </div>
+    <div class="slabel">Example</div>
+    <textarea id="pms-example" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Optional Tech</div>
+    <textarea id="pms-tech" spellcheck="true" lang="de"></textarea>
+    <hr class="divider"/>
+    <div class="slabel">Result for Customer</div>
+    <textarea id="pms-result" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Status</div>
+    <div class="grid3">
+      <div><div class="fl">Global?</div><div class="yn" id="yn-pms-global"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Finances?</div><div class="yn" id="yn-pms-finance"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Availability / Bookable?</div><div class="yn" id="yn-pms-avail"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Customer escalates?</div><div class="yn" id="yn-pms-esc"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Security / reputation?</div><div class="yn" id="yn-pms-sec"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <div class="slabel">Ticket Owners</div>
+    <div class="grid">
+      <div><div class="fl">1st Level</div><input type="text" id="pms-1st"/></div>
+      <div><div class="fl">HubSpot Ticket-ID</div><input type="text" id="pms-hsid" placeholder="z.B. 394897923316"/></div>
+    </div>
+    <div class="btn-row">
+      <button class="pri" onclick="build('pms')">Ticket erstellen ↗</button>
+      <button class="sec" onclick="clr('pms')">Leeren</button>
+    </div>
+    <div class="output-box" id="pms-output"></div>
+    <p class="hint">Rechtschreibprüfung aktiv (DE). Ticket erstellen → Text wird unten angezeigt und kann kopiert werden.</p>
+  </div>
+
+  <!-- PMS Reservation -->
+  <div class="tc" id="tc-pmsres">
+    <div class="slabel">Context</div>
+    <div class="grid">
+      <div><div class="fl">KNR / Service Level</div><input type="text" id="pmsres-knr"/></div>
+      <div><div class="fl">PMS Version</div><input type="text" id="pmsres-ver" placeholder="V2 / V3"/></div>
+      <div><div class="fl">Modules / Environment</div><input type="text" id="pmsres-env" spellcheck="true" lang="de"/></div>
+      <div><div class="fl">Bearbeiter (2nd Level)</div><input type="text" id="pmsres-agent" placeholder="z.B. Rahm"/></div>
+    </div>
+    <div class="slabel">Problem</div>
+    <textarea id="pmsres-problem" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Expectation</div>
+    <div class="grid">
+      <div><div class="fl">Value in PMS</div><input type="text" id="pmsres-valpms"/></div>
+      <div><div class="fl">Value in Cockpit</div><input type="text" id="pmsres-valcockpit"/></div>
+      <div><div class="fl">What would be correct?</div><input type="text" id="pmsres-correct" spellcheck="true" lang="de" placeholder="Was sollte stattdessen passieren? / Erwartetes Verhalten beschreiben..."/></div>
+      <div><div class="fl">What is wrong in PMS?</div><input type="text" id="pmsres-wrong" spellcheck="true" lang="de"/></div>
+    </div>
+    <div class="grid3" style="margin-top:8px">
+      <div><div class="fl">Reservation sent to PMS?</div><div class="yn" id="yn-pmsres-sent"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">PMS confirmed?</div><div class="yn" id="yn-pmsres-conf"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <div class="slabel">Example</div>
+    <textarea id="pmsres-example" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Optional Tech</div>
+    <textarea id="pmsres-tech" spellcheck="true" lang="de"></textarea>
+    <hr class="divider"/>
+    <div class="slabel">Result for Customer</div>
+    <textarea id="pmsres-result" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Status</div>
+    <div class="grid3">
+      <div><div class="fl">Global?</div><div class="yn" id="yn-pmsres-global"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Finances?</div><div class="yn" id="yn-pmsres-finance"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Availability / Bookable?</div><div class="yn" id="yn-pmsres-avail"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Customer escalates?</div><div class="yn" id="yn-pmsres-esc"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Security / reputation?</div><div class="yn" id="yn-pmsres-sec"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <div class="slabel">Ticket Owners</div>
+    <div class="grid">
+      <div><div class="fl">1st Level</div><input type="text" id="pmsres-1st"/></div>
+      <div><div class="fl">HubSpot Ticket-ID</div><input type="text" id="pmsres-hsid"/></div>
+    </div>
+    <div class="btn-row">
+      <button class="pri" onclick="build('pmsres')">Ticket erstellen ↗</button>
+      <button class="sec" onclick="clr('pmsres')">Leeren</button>
+    </div>
+    <div class="output-box" id="pmsres-output"></div>
+    <p class="hint">Rechtschreibprüfung aktiv (DE).</p>
+  </div>
+
+  <!-- Overbooking -->
+  <div class="tc" id="tc-overbooking">
+    <div class="slabel">Context</div>
+    <div class="grid">
+      <div><div class="fl">KNR / Service Level</div><input type="text" id="ob-knr"/></div>
+      <div><div class="fl">BID</div><input type="text" id="ob-bid"/></div>
+      <div><div class="fl">Modules / Environment</div><input type="text" id="ob-env" spellcheck="true" lang="de"/></div>
+      <div><div class="fl">Bearbeiter (2nd Level)</div><input type="text" id="ob-agent" placeholder="z.B. Rahm"/></div>
+    </div>
+    <div class="slabel">Overbooking Details</div>
+    <div class="grid">
+      <div><div class="fl">Source (IBE / OTA-Channel)</div><input type="text" id="ob-source"/></div>
+      <div><div class="fl">Overbooked BID</div><input type="text" id="ob-overbid"/></div>
+      <div><div class="fl">Wann überbucht?</div><input type="text" id="ob-when"/></div>
+      <div><div class="fl">Affected room (name / ID)</div><input type="text" id="ob-room"/></div>
+      <div><div class="fl">Überbuchtes Datum</div><input type="text" id="ob-date"/></div>
+      <div><div class="fl">Logging Link</div><input type="text" id="ob-log" placeholder="https://..."/></div>
+    </div>
+    <div class="grid3" style="margin-top:8px">
+      <div><div class="fl">Verfügbarkeit = -1?</div><div class="yn" id="yn-ob-neg"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <div class="slabel">Optional Tech</div>
+    <textarea id="ob-tech" spellcheck="true" lang="de"></textarea>
+    <hr class="divider"/>
+    <div class="slabel">Result for Customer</div>
+    <textarea id="ob-result" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Status</div>
+    <div class="grid3">
+      <div><div class="fl">Global?</div><div class="yn" id="yn-ob-global"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Finances?</div><div class="yn" id="yn-ob-finance"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Availability / Bookable?</div><div class="yn" id="yn-ob-avail"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Customer escalates?</div><div class="yn" id="yn-ob-esc"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Security / reputation?</div><div class="yn" id="yn-ob-sec"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <div class="slabel">Ticket Owners</div>
+    <div class="grid">
+      <div><div class="fl">1st Level</div><input type="text" id="ob-1st"/></div>
+      <div><div class="fl">HubSpot Ticket-ID</div><input type="text" id="ob-hsid"/></div>
+    </div>
+    <div class="btn-row">
+      <button class="pri" onclick="build('overbooking')">Ticket erstellen ↗</button>
+      <button class="sec" onclick="clr('overbooking')">Leeren</button>
+    </div>
+    <div class="output-box" id="overbooking-output"></div>
+    <p class="hint">Rechtschreibprüfung aktiv (DE).</p>
+  </div>
+
+  <!-- Payment -->
+  <div class="tc" id="tc-payment">
+    <div class="slabel">Context</div>
+    <div class="grid">
+      <div><div class="fl">KNR / Service Level</div><input type="text" id="pay-knr"/></div>
+      <div><div class="fl">Payment Provider</div><input type="text" id="pay-prov" placeholder="z.B. Stripe, Adyen, Nexi..."/></div>
+      <div><div class="fl">Modules / Environment</div><input type="text" id="pay-env" spellcheck="true" lang="de"/></div>
+      <div><div class="fl">Bearbeiter (2nd Level)</div><input type="text" id="pay-agent" placeholder="z.B. Rahm"/></div>
+      <div><div class="fl">Payment & Cancellation Condition</div><input type="text" id="pay-cond" placeholder="Name / ID"/></div>
+      <div><div class="fl">Affected Rate (name / ID)</div><input type="text" id="pay-rate"/></div>
+    </div>
+    <div class="slabel">Problem</div>
+    <textarea id="pay-problem" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Expectation</div>
+    <input type="text" id="pay-expect" spellcheck="true" lang="de" placeholder="Was sollte stattdessen passieren? / Erwartetes Verhalten beschreiben..." style="width:100%;padding:7px 11px;font-size:13px;border:1px solid #333;border-radius:6px;background:#252525;color:#e0e0e0;font-family:inherit"/>
+    <div class="slabel">Example</div>
+    <textarea id="pay-example" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Optional Tech</div>
+    <textarea id="pay-tech" spellcheck="true" lang="de"></textarea>
+    <div class="grid3" style="margin-top:8px">
+      <div><div class="fl">Credentials proved?</div><div class="yn" id="yn-pay-cred"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Rate settings proved?</div><div class="yn" id="yn-pay-rate"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <hr class="divider"/>
+    <div class="slabel">Result for Customer</div>
+    <textarea id="pay-result" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Status</div>
+    <div class="grid3">
+      <div><div class="fl">Global?</div><div class="yn" id="yn-pay-global"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Finances?</div><div class="yn" id="yn-pay-finance"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Availability / Bookable?</div><div class="yn" id="yn-pay-avail"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Customer escalates?</div><div class="yn" id="yn-pay-esc"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Security / reputation?</div><div class="yn" id="yn-pay-sec"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <div class="slabel">Ticket Owners</div>
+    <div class="grid">
+      <div><div class="fl">1st Level</div><input type="text" id="pay-1st"/></div>
+      <div><div class="fl">HubSpot Ticket-ID</div><input type="text" id="pay-hsid"/></div>
+    </div>
+    <div class="btn-row">
+      <button class="pri" onclick="build('payment')">Ticket erstellen ↗</button>
+      <button class="sec" onclick="clr('payment')">Leeren</button>
+    </div>
+    <div class="output-box" id="payment-output"></div>
+    <p class="hint">Rechtschreibprüfung aktiv (DE).</p>
+  </div>
+
+  <!-- OTA -->
+  <div class="tc" id="tc-ota">
+    <div class="slabel">Context</div>
+    <div class="grid">
+      <div><div class="fl">KNR / Service Level</div><input type="text" id="ota-knr"/></div>
+      <div><div class="fl">OTA</div><input type="text" id="ota-name" placeholder="z.B. Booking.com, Expedia..."/></div>
+      <div><div class="fl">Modules / Environment</div><input type="text" id="ota-env" spellcheck="true" lang="de"/></div>
+      <div><div class="fl">Bearbeiter (2nd Level)</div><input type="text" id="ota-agent" placeholder="z.B. Rahm"/></div>
+    </div>
+    <div class="slabel">Problem</div>
+    <textarea id="ota-problem" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Expectation</div>
+    <div class="grid">
+      <div><div class="fl">Value should be in OTA</div><input type="text" id="ota-valota"/></div>
+      <div><div class="fl">Value should be in DIRS21</div><input type="text" id="ota-valdirs"/></div>
+      <div class="full"><div class="fl">What should actually be happening?</div><input type="text" id="ota-expect" spellcheck="true" lang="de" placeholder="Was sollte stattdessen passieren? / Erwartetes Verhalten beschreiben..."/></div>
+    </div>
+    <div class="slabel">Example</div>
+    <textarea id="ota-example" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Optional Tech</div>
+    <textarea id="ota-tech" spellcheck="true" lang="de"></textarea>
+    <hr class="divider"/>
+    <div class="slabel">Result for Customer</div>
+    <textarea id="ota-result" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Status</div>
+    <div class="grid3">
+      <div><div class="fl">Global?</div><div class="yn" id="yn-ota-global"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Finances?</div><div class="yn" id="yn-ota-finance"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Availability / Bookable?</div><div class="yn" id="yn-ota-avail"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Customer escalates?</div><div class="yn" id="yn-ota-esc"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Security / reputation?</div><div class="yn" id="yn-ota-sec"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <div class="slabel">Ticket Owners</div>
+    <div class="grid">
+      <div><div class="fl">1st Level</div><input type="text" id="ota-1st"/></div>
+      <div><div class="fl">HubSpot Ticket-ID</div><input type="text" id="ota-hsid"/></div>
+    </div>
+    <div class="btn-row">
+      <button class="pri" onclick="build('ota')">Ticket erstellen ↗</button>
+      <button class="sec" onclick="clr('ota')">Leeren</button>
+    </div>
+    <div class="output-box" id="ota-output"></div>
+    <p class="hint">Rechtschreibprüfung aktiv (DE).</p>
+  </div>
+
+  <!-- ONE -->
+  <div class="tc" id="tc-one">
+    <div class="slabel">Context</div>
+    <div class="grid">
+      <div><div class="fl">KNR / Service Level</div><input type="text" id="one-knr"/></div>
+      <div><div class="fl">ONE Product</div><input type="text" id="one-prod" placeholder="z.B. ONE Availability..."/></div>
+      <div><div class="fl">Environment</div><input type="text" id="one-env" spellcheck="true" lang="de"/></div>
+      <div><div class="fl">Bearbeiter (2nd Level)</div><input type="text" id="one-agent" placeholder="z.B. Rahm"/></div>
+      <div><div class="fl">Direct-Link zu ONE</div><input type="text" id="one-link" placeholder="https://..."/></div>
+      <div><div class="fl">BID / TOCC ID</div><input type="text" id="one-bid"/></div>
+    </div>
+    <div class="slabel">Problem</div>
+    <textarea id="one-problem" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Expectation</div>
+    <input type="text" id="one-expect" spellcheck="true" lang="de" placeholder="Was sollte stattdessen passieren? / Erwartetes Verhalten beschreiben..." style="width:100%;padding:7px 11px;font-size:13px;border:1px solid #333;border-radius:6px;background:#252525;color:#e0e0e0;font-family:inherit"/>
+    <div class="slabel">Example</div>
+    <textarea id="one-example" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Optional Tech</div>
+    <textarea id="one-tech" spellcheck="true" lang="de"></textarea>
+    <hr class="divider"/>
+    <div class="slabel">Result for Customer</div>
+    <textarea id="one-result" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Status</div>
+    <div class="grid3">
+      <div><div class="fl">Global?</div><div class="yn" id="yn-one-global"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Finances?</div><div class="yn" id="yn-one-finance"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Availability / Bookable?</div><div class="yn" id="yn-one-avail"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Customer escalates?</div><div class="yn" id="yn-one-esc"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Security / reputation?</div><div class="yn" id="yn-one-sec"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <div class="slabel">Ticket Owners</div>
+    <div class="grid">
+      <div><div class="fl">1st Level</div><input type="text" id="one-1st"/></div>
+      <div><div class="fl">HubSpot Ticket-ID</div><input type="text" id="one-hsid"/></div>
+    </div>
+    <div class="btn-row">
+      <button class="pri" onclick="build('one')">Ticket erstellen ↗</button>
+      <button class="sec" onclick="clr('one')">Leeren</button>
+    </div>
+    <div class="output-box" id="one-output"></div>
+    <p class="hint">Rechtschreibprüfung aktiv (DE).</p>
+  </div>
+
+  <!-- Meta -->
+  <div class="tc" id="tc-meta">
+    <div class="slabel">Context</div>
+    <div class="grid">
+      <div><div class="fl">KNR / Service Level</div><input type="text" id="meta-knr"/></div>
+      <div><div class="fl">Modules / Environment</div><input type="text" id="meta-env" spellcheck="true" lang="de"/></div>
+      <div><div class="fl">Meta-Source (mit Link)</div><input type="text" id="meta-source"/></div>
+      <div><div class="fl">Bearbeiter (2nd Level)</div><input type="text" id="meta-agent" placeholder="z.B. Rahm"/></div>
+    </div>
+    <div class="slabel">Problem</div>
+    <textarea id="meta-problem" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Expectation</div>
+    <input type="text" id="meta-expect" spellcheck="true" lang="de" placeholder="Was sollte stattdessen passieren? / Erwartetes Verhalten beschreiben..." style="width:100%;padding:7px 11px;font-size:13px;border:1px solid #333;border-radius:6px;background:#252525;color:#e0e0e0;font-family:inherit"/>
+    <div class="slabel">Example</div>
+    <textarea id="meta-example" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Optional Tech</div>
+    <textarea id="meta-tech" spellcheck="true" lang="de"></textarea>
+    <div class="grid3" style="margin-top:8px">
+      <div><div class="fl">ds_dm_hotelids entry?</div><div class="yn" id="yn-meta-hotel"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Google Hotelcenter checked?</div><div class="yn" id="yn-meta-gc"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Google campaign linked?</div><div class="yn" id="yn-meta-camp"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Google CPC budget loaded?</div><div class="yn" id="yn-meta-cpc"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <hr class="divider"/>
+    <div class="slabel">Result for Customer</div>
+    <textarea id="meta-result" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Status</div>
+    <div class="grid3">
+      <div><div class="fl">Global?</div><div class="yn" id="yn-meta-global"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Finances?</div><div class="yn" id="yn-meta-finance"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Availability / Bookable?</div><div class="yn" id="yn-meta-avail"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Customer escalates?</div><div class="yn" id="yn-meta-esc"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Security / reputation?</div><div class="yn" id="yn-meta-sec"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <div class="slabel">Ticket Owners</div>
+    <div class="grid">
+      <div><div class="fl">1st Level</div><input type="text" id="meta-1st"/></div>
+      <div><div class="fl">HubSpot Ticket-ID</div><input type="text" id="meta-hsid"/></div>
+    </div>
+    <div class="btn-row">
+      <button class="pri" onclick="build('meta')">Ticket erstellen ↗</button>
+      <button class="sec" onclick="clr('meta')">Leeren</button>
+    </div>
+    <div class="output-box" id="meta-output"></div>
+    <p class="hint">Rechtschreibprüfung aktiv (DE).</p>
+  </div>
+
+  <!-- Bugfix -->
+  <div class="tc" id="tc-bugfix">
+    <div class="slabel">Context</div>
+    <div class="grid">
+      <div><div class="fl">KNR / Service Level</div><input type="text" id="bug-knr"/></div>
+      <div><div class="fl">Categorization</div><input type="text" id="bug-cat" placeholder="coding / system / user"/></div>
+      <div><div class="fl">Modules / Environment</div><input type="text" id="bug-env" spellcheck="true" lang="de"/></div>
+      <div><div class="fl">Bearbeiter (2nd Level)</div><input type="text" id="bug-agent" placeholder="z.B. Rahm"/></div>
+    </div>
+    <div class="slabel">Problem + Reproduzierbarkeit</div>
+    <textarea id="bug-problem" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Expectation</div>
+    <input type="text" id="bug-expect" spellcheck="true" lang="de" placeholder="Was sollte stattdessen passieren? / Erwartetes Verhalten beschreiben..." style="width:100%;padding:7px 11px;font-size:13px;border:1px solid #333;border-radius:6px;background:#252525;color:#e0e0e0;font-family:inherit"/>
+    <div class="slabel">Example & Recreation</div>
+    <textarea id="bug-example" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Optional Tech</div>
+    <textarea id="bug-tech" spellcheck="true" lang="de"></textarea>
+    <hr class="divider"/>
+    <div class="slabel">Result for Customer</div>
+    <textarea id="bug-result" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Status</div>
+    <div class="grid3">
+      <div><div class="fl">Global?</div><div class="yn" id="yn-bug-global"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Finances?</div><div class="yn" id="yn-bug-finance"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Availability / Bookable?</div><div class="yn" id="yn-bug-avail"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Customer escalates?</div><div class="yn" id="yn-bug-esc"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Security / reputation?</div><div class="yn" id="yn-bug-sec"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <div class="slabel">Ticket Owners</div>
+    <div class="grid">
+      <div><div class="fl">1st Level</div><input type="text" id="bug-1st"/></div>
+      <div><div class="fl">HubSpot Ticket-ID</div><input type="text" id="bug-hsid"/></div>
+    </div>
+    <div class="btn-row">
+      <button class="pri" onclick="build('bugfix')">Ticket erstellen ↗</button>
+      <button class="sec" onclick="clr('bugfix')">Leeren</button>
+    </div>
+    <div class="output-box" id="bugfix-output"></div>
+    <p class="hint">Rechtschreibprüfung aktiv (DE).</p>
+  </div>
+
+  <!-- Cockpit -->
+  <div class="tc" id="tc-cockpit">
+    <div class="slabel">Context</div>
+    <div class="grid">
+      <div><div class="fl">KNR / Service Level</div><input type="text" id="cockpit-knr"/></div>
+      <div><div class="fl">Bearbeiter (2nd Level)</div><input type="text" id="cockpit-agent" placeholder="z.B. Rahm"/></div>
+      <div class="full"><div class="fl">Modules / Environment</div><input type="text" id="cockpit-env" spellcheck="true" lang="de" placeholder="z.B. Cockpit Reservierungsliste, Raten..."/></div>
+    </div>
+    <div class="slabel">Problem</div>
+    <textarea id="cockpit-problem" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Expectation</div>
+    <input type="text" id="cockpit-expect" spellcheck="true" lang="de" placeholder="Was sollte stattdessen passieren? / Erwartetes Verhalten beschreiben..." style="width:100%;padding:7px 11px;font-size:13px;border:1px solid #333;border-radius:6px;background:#252525;color:#e0e0e0;font-family:inherit"/>
+    <div class="slabel">Example</div>
+    <textarea id="cockpit-example" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Optional Tech</div>
+    <textarea id="cockpit-tech" spellcheck="true" lang="de"></textarea>
+    <hr class="divider"/>
+    <div class="slabel">Result for Customer</div>
+    <textarea id="cockpit-result" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Status</div>
+    <div class="grid3">
+      <div><div class="fl">Global?</div><div class="yn" id="yn-cockpit-global"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Finances?</div><div class="yn" id="yn-cockpit-finance"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Availability / Bookable?</div><div class="yn" id="yn-cockpit-avail"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Customer escalates?</div><div class="yn" id="yn-cockpit-esc"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Security / reputation?</div><div class="yn" id="yn-cockpit-sec"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <div class="slabel">Ticket Owners</div>
+    <div class="grid">
+      <div><div class="fl">1st Level</div><input type="text" id="cockpit-1st"/></div>
+      <div><div class="fl">HubSpot Ticket-ID</div><input type="text" id="cockpit-hsid"/></div>
+    </div>
+    <div class="btn-row">
+      <button class="pri" onclick="build('cockpit')">Ticket erstellen ↗</button>
+      <button class="sec" onclick="clr('cockpit')">Leeren</button>
+    </div>
+    <div class="output-box" id="cockpit-output"></div>
+    <p class="hint">Rechtschreibprüfung aktiv (DE).</p>
+  </div>
+
+  <!-- Custom -->
+  <div class="tc" id="tc-custom">
+    <div class="slabel">Context</div>
+    <div class="grid">
+      <div><div class="fl">KNR / Service Level</div><input type="text" id="custom-knr"/></div>
+      <div><div class="fl">Bearbeiter (2nd Level)</div><input type="text" id="custom-agent" placeholder="z.B. Rahm"/></div>
+      <div class="full"><div class="fl">Modules / Environment</div><input type="text" id="custom-env" spellcheck="true" lang="de"/></div>
+    </div>
+    <div class="slabel">Problem</div>
+    <textarea id="custom-problem" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Expectation</div>
+    <input type="text" id="custom-expect" spellcheck="true" lang="de" placeholder="Was sollte stattdessen passieren? / Erwartetes Verhalten beschreiben..." style="width:100%;padding:7px 11px;font-size:13px;border:1px solid #333;border-radius:6px;background:#252525;color:#e0e0e0;font-family:inherit"/>
+    <div class="slabel">Example</div>
+    <textarea id="custom-example" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Optional Tech</div>
+    <textarea id="custom-tech" spellcheck="true" lang="de"></textarea>
+    <hr class="divider"/>
+    <div class="slabel">Result for Customer</div>
+    <textarea id="custom-result" spellcheck="true" lang="de"></textarea>
+    <div class="slabel">Status</div>
+    <div class="grid3">
+      <div><div class="fl">Global?</div><div class="yn" id="yn-custom-global"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Finances?</div><div class="yn" id="yn-custom-finance"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Availability / Bookable?</div><div class="yn" id="yn-custom-avail"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Customer escalates?</div><div class="yn" id="yn-custom-esc"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+      <div><div class="fl">Security / reputation?</div><div class="yn" id="yn-custom-sec"><button onclick="yn(this)">Yes</button><button onclick="yn(this)">No</button><button onclick="yn(this)">Unknown</button></div></div>
+    </div>
+    <div class="slabel">Ticket Owners</div>
+    <div class="grid">
+      <div><div class="fl">1st Level</div><input type="text" id="custom-1st"/></div>
+      <div><div class="fl">HubSpot Ticket-ID</div><input type="text" id="custom-hsid"/></div>
+    </div>
+    <div class="btn-row">
+      <button class="pri" onclick="build('custom')">Ticket erstellen ↗</button>
+      <button class="sec" onclick="clr('custom')">Leeren</button>
+    </div>
+    <div class="output-box" id="custom-output"></div>
+    <p class="hint">Rechtschreibprüfung aktiv (DE).</p>
+  </div>
+
+</div>
+
+<script>
+const TABS=['pms','pmsres','overbooking','payment','ota','one','meta','bugfix','cockpit','custom'];
+
+function sw(n){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tc').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab')[TABS.indexOf(n)].classList.add('active');
+  document.getElementById('tc-'+n).classList.add('active');
+}
+
+function clr(t){
+  document.querySelectorAll('#tc-'+t+' input, #tc-'+t+' textarea').forEach(e=>{
+    e.value='';
+    e.classList.remove('warn');
+    const msg=e.parentElement.querySelector('.warn-msg');
+    if(msg)msg.remove();
+  });
+  document.querySelectorAll('#tc-'+t+' .yn button').forEach(b=>{
+    b.style.removeProperty('background');
+    b.style.removeProperty('color');
+    b.style.removeProperty('border');
+    b.style.removeProperty('font-weight');
+  });
+  const ob=document.getElementById(t+'-output');
+  if(ob){ob.innerHTML='';ob.classList.remove('visible');}
+  const banner=document.getElementById(t+'-banner');
+  if(banner){banner.className='validation-banner';banner.innerHTML='';}
+}
+
+function v(id){return(document.getElementById(id)?.value||'').trim()||'(not provided)';}
+function ynVal(id){const sel=document.querySelector('#'+id+' button[style*="background: rgb(255, 255, 255)"], #'+id+' button[style*="background:#ffffff"]');if(sel)return sel.textContent;const allBtns=document.querySelectorAll('#'+id+' button');for(const b of allBtns){if(b.style.background&&b.style.background!=='transparent'&&b.style.background!=='')return b.textContent;}return'(not provided)';}
+
+function yn(btn){
+  const g=btn.parentElement;
+  g.querySelectorAll('button').forEach(b=>{
+    b.style.removeProperty('background');
+    b.style.removeProperty('color');
+    b.style.removeProperty('border');
+    b.style.removeProperty('font-weight');
+  });
+  btn.style.setProperty('background','#ffffff','important');
+  btn.style.setProperty('color','#000000','important');
+  btn.style.setProperty('border','2px solid #000000','important');
+  btn.style.setProperty('font-weight','700','important');
+}
+
+function commonStatus(p){
+  return `\n**Status:**\n* Global — more than one customer affected?: ${ynVal('yn-'+p+'-global')}\n* Finances — direct loss of revenue?: ${ynVal('yn-'+p+'-finance')}\n* Availability / Bookable?: ${ynVal('yn-'+p+'-avail')}\n* Customer escalates / threatens?: ${ynVal('yn-'+p+'-esc')}\n* Security / rights / reputation issues?: ${ynVal('yn-'+p+'-sec')}`;
+}
+
+function buildText(type){
+  let text='';
+  if(type==='pms'){
+    text=`**Ticket Name:** PMS | KNR ${v('pms-knr')} | ${v('pms-problem').split('\n')[0].substring(0,60)}\n\n**What kind of case is it?** PMS Error\n\n**Context:**\n* KNR: ${v('pms-knr')}\n* PMS Version: ${v('pms-ver')}\n* Environment: ${v('pms-env')}\n* 2nd Level: ${v('pms-agent')}\n\n**Problem:**\n* ${v('pms-problem')}\n\n**Expectation:**\n* What should happen: ${v('pms-expect')}\n* Value in PMS: ${v('pms-valpms')}\n* Value in Cockpit: ${v('pms-valcockpit')}\n\n**Example:**\n* ${v('pms-example')}\n\n**Technical Details:**\n* ${v('pms-tech')}\n\n**Result for Customer:**\n* ${v('pms-result')}${commonStatus('pms')}\n\n**Ticket Owners:**\n* 1st Level: ${v('pms-1st')}\n* 2nd Level: ${v('pms-agent')}`;
+  } else if(type==='pmsres'){
+    text=`**Ticket Name:** PMS Incorrect Reservation | KNR ${v('pmsres-knr')} | ${v('pmsres-problem').split('\n')[0].substring(0,50)}\n\n**What kind of case is it?** PMS Incorrect Reservation\n\n**Context:**\n* KNR: ${v('pmsres-knr')}\n* PMS Version: ${v('pmsres-ver')}\n* Environment: ${v('pmsres-env')}\n* 2nd Level: ${v('pmsres-agent')}\n\n**Problem:**\n* ${v('pmsres-problem')}\n\n**Expectation:**\n* Value in PMS: ${v('pmsres-valpms')}\n* Value in Cockpit: ${v('pmsres-valcockpit')}\n* What would be correct: ${v('pmsres-correct')}\n* What is wrong in PMS: ${v('pmsres-wrong')}\n* Reservation sent to PMS?: ${ynVal('yn-pmsres-sent')}\n* PMS confirmed?: ${ynVal('yn-pmsres-conf')}\n\n**Example:**\n* ${v('pmsres-example')}\n\n**Technical Details:**\n* ${v('pmsres-tech')}\n\n**Result for Customer:**\n* ${v('pmsres-result')}${commonStatus('pmsres')}\n\n**Ticket Owners:**\n* 1st Level: ${v('pmsres-1st')}\n* 2nd Level: ${v('pmsres-agent')}`;
+  } else if(type==='overbooking'){
+    text=`**Ticket Name:** Overbooking | KNR ${v('ob-knr')} | BID ${v('ob-bid')}\n\n**What kind of case is it?** Overbooking\n\n**Context:**\n* KNR: ${v('ob-knr')}\n* Environment: ${v('ob-env')}\n* 2nd Level: ${v('ob-agent')}\n\n**Overbooking Details:**\n* Source: ${v('ob-source')}\n* Overbooked BID: ${v('ob-overbid')}\n* When: ${v('ob-when')}\n* Affected Room: ${v('ob-room')}\n* Overbooked Date: ${v('ob-date')}\n* Availability = -1?: ${ynVal('yn-ob-neg')}\n* Logging Link: ${v('ob-log')}\n\n**Technical Details:**\n* ${v('ob-tech')}\n\n**Result for Customer:**\n* ${v('ob-result')}${commonStatus('ob')}\n\n**Ticket Owners:**\n* 1st Level: ${v('ob-1st')}\n* 2nd Level: ${v('ob-agent')}`;
+  } else if(type==='payment'){
+    text=`**Ticket Name:** Payment | KNR ${v('pay-knr')} | ${v('pay-prov')}\n\n**What kind of case is it?** Payment Error\n\n**Context:**\n* KNR: ${v('pay-knr')}\n* Payment Provider: ${v('pay-prov')}\n* Environment: ${v('pay-env')}\n* Payment & Cancellation Condition: ${v('pay-cond')}\n* Affected Rate: ${v('pay-rate')}\n* 2nd Level: ${v('pay-agent')}\n\n**Problem:**\n* ${v('pay-problem')}\n\n**Expectation:**\n* ${v('pay-expect')}\n\n**Example:**\n* ${v('pay-example')}\n\n**Technical Details:**\n* ${v('pay-tech')}\n* Credentials proved?: ${ynVal('yn-pay-cred')}\n* Rate settings proved?: ${ynVal('yn-pay-rate')}\n\n**Result for Customer:**\n* ${v('pay-result')}${commonStatus('pay')}\n\n**Ticket Owners:**\n* 1st Level: ${v('pay-1st')}\n* 2nd Level: ${v('pay-agent')}`;
+  } else if(type==='ota'){
+    text=`**Ticket Name:** OTA | KNR ${v('ota-knr')} | ${v('ota-name')}\n\n**What kind of case is it?** Discrepancy between DIRS21 and OTA\n\n**Context:**\n* KNR: ${v('ota-knr')}\n* OTA: ${v('ota-name')}\n* Environment: ${v('ota-env')}\n* 2nd Level: ${v('ota-agent')}\n\n**Problem:**\n* ${v('ota-problem')}\n\n**Expectation:**\n* What should happen: ${v('ota-expect')}\n* Value in OTA: ${v('ota-valota')}\n* Value in DIRS21: ${v('ota-valdirs')}\n\n**Example:**\n* ${v('ota-example')}\n\n**Technical Details:**\n* ${v('ota-tech')}\n\n**Result for Customer:**\n* ${v('ota-result')}${commonStatus('ota')}\n\n**Ticket Owners:**\n* 1st Level: ${v('ota-1st')}\n* 2nd Level: ${v('ota-agent')}`;
+  } else if(type==='one'){
+    text=`**Ticket Name:** ONE | KNR ${v('one-knr')} | ${v('one-prod')}\n\n**What kind of case is it?** Error in ONE\n\n**Context:**\n* KNR: ${v('one-knr')}\n* ONE Product: ${v('one-prod')}\n* Environment: ${v('one-env')}\n* Direct-Link: ${v('one-link')}\n* BID / TOCC ID: ${v('one-bid')}\n* 2nd Level: ${v('one-agent')}\n\n**Problem:**\n* ${v('one-problem')}\n\n**Expectation:**\n* ${v('one-expect')}\n\n**Example:**\n* ${v('one-example')}\n\n**Technical Details:**\n* ${v('one-tech')}\n\n**Result for Customer:**\n* ${v('one-result')}${commonStatus('one')}\n\n**Ticket Owners:**\n* 1st Level: ${v('one-1st')}\n* 2nd Level: ${v('one-agent')}`;
+  } else if(type==='meta'){
+    text=`**Ticket Name:** Meta Issue | KNR ${v('meta-knr')} | ${v('meta-problem').split('\n')[0].substring(0,50)}\n\n**What kind of case is it?** Meta Issue\n\n**Context:**\n* KNR: ${v('meta-knr')}\n* Environment: ${v('meta-env')}\n* Meta-Source: ${v('meta-source')}\n* 2nd Level: ${v('meta-agent')}\n\n**Problem:**\n* ${v('meta-problem')}\n\n**Expectation:**\n* ${v('meta-expect')}\n\n**Example:**\n* ${v('meta-example')}\n\n**Technical Details:**\n* ${v('meta-tech')}\n* ds_dm_hotelids entry?: ${ynVal('yn-meta-hotel')}\n* Google Hotelcenter checked?: ${ynVal('yn-meta-gc')}\n* Google campaign linked?: ${ynVal('yn-meta-camp')}\n* Google CPC budget loaded?: ${ynVal('yn-meta-cpc')}\n\n**Result for Customer:**\n* ${v('meta-result')}${commonStatus('meta')}\n\n**Ticket Owners:**\n* 1st Level: ${v('meta-1st')}\n* 2nd Level: ${v('meta-agent')}`;
+  } else if(type==='bugfix'){
+    text=`**Ticket Name:** Bugfix | KNR ${v('bug-knr')} | ${v('bug-problem').split('\n')[0].substring(0,50)}\n\n**What kind of case is it?** Bug\n\n**Context:**\n* KNR: ${v('bug-knr')}\n* Categorization: ${v('bug-cat')}\n* Environment: ${v('bug-env')}\n* 2nd Level: ${v('bug-agent')}\n\n**Problem:**\n* ${v('bug-problem')}\n\n**Expectation:**\n* ${v('bug-expect')}\n\n**Example & Recreation:**\n* ${v('bug-example')}\n\n**Technical Details:**\n* ${v('bug-tech')}\n\n**Result for Customer:**\n* ${v('bug-result')}${commonStatus('bug')}\n\n**Ticket Owners:**\n* 1st Level: ${v('bug-1st')}\n* 2nd Level: ${v('bug-agent')}`;
+  } else if(type==='cockpit'){
+    text=`**Ticket Name:** Cockpit | KNR ${v('cockpit-knr')} | ${v('cockpit-problem').split('\n')[0].substring(0,50)}\n\n**What kind of case is it?** Cockpit Issue\n\n**Context:**\n* KNR: ${v('cockpit-knr')}\n* Environment: ${v('cockpit-env')}\n* 2nd Level: ${v('cockpit-agent')}\n\n**Problem:**\n* ${v('cockpit-problem')}\n\n**Expectation:**\n* ${v('cockpit-expect')}\n\n**Example:**\n* ${v('cockpit-example')}\n\n**Technical Details:**\n* ${v('cockpit-tech')}\n\n**Result for Customer:**\n* ${v('cockpit-result')}${commonStatus('cockpit')}\n\n**Ticket Owners:**\n* 1st Level: ${v('cockpit-1st')}\n* 2nd Level: ${v('cockpit-agent')}`;
+  } else {
+    text=`**Ticket Name:** KNR ${v('custom-knr')} | ${v('custom-problem').split('\n')[0].substring(0,50)}\n\n**Context:**\n* KNR: ${v('custom-knr')}\n* Environment: ${v('custom-env')}\n* 2nd Level: ${v('custom-agent')}\n\n**Problem:**\n* ${v('custom-problem')}\n\n**Expectation:**\n* ${v('custom-expect')}\n\n**Example:**\n* ${v('custom-example')}\n\n**Technical Details:**\n* ${v('custom-tech')}\n\n**Result for Customer:**\n* ${v('custom-result')}${commonStatus('custom')}\n\n**Ticket Owners:**\n* 1st Level: ${v('custom-1st')}\n* 2nd Level: ${v('custom-agent')}`;
+  }
+  return text;
+}
+
+function validateTab(type){
+  // Get all inputs and textareas in this tab
+  const tab=document.getElementById('tc-'+type);
+  const fields=tab.querySelectorAll('input[type=text], textarea');
+  const empty=[];
+  fields.forEach(f=>{
+    const val=(f.value||'').trim();
+    const label=f.previousElementSibling?.textContent||f.id;
+    // Remove previous warning
+    f.classList.remove('warn');
+    const existing=f.parentElement.querySelector('.warn-msg');
+    if(existing)existing.remove();
+    if(!val){
+      f.classList.add('warn');
+      const msg=document.createElement('div');
+      msg.className='warn-msg visible';
+      msg.textContent='⚠ Dieses Feld ist leer';
+      f.parentElement.appendChild(msg);
+      empty.push(label);
+    }
+  });
+  return empty;
+}
+
+function build(type){
+  // Run validation first
+  const emptyFields=validateTab(type);
+
+  // Show or hide banner
+  let banner=document.getElementById(type+'-banner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.className='validation-banner';
+    banner.id=type+'-banner';
+    const ob=document.getElementById(type+'-output');
+    ob.parentNode.insertBefore(banner,ob);
+  }
+  if(emptyFields.length>0){
+    banner.className='validation-banner visible';
+    banner.innerHTML='⚠ <strong>Hinweis:</strong> '+emptyFields.length+' Feld(er) sind leer. Das Ticket wird trotzdem erstellt, aber bitte prüfe die markierten Felder.';
+  } else {
+    banner.className='validation-banner';
+    banner.innerHTML='';
+  }
+
+  const text=buildText(type);
+  const ob=document.getElementById(type+'-output');
+  ob.textContent=text;
+  ob.classList.add('visible');
+  let cb=document.getElementById(type+'-copy');
+  if(!cb){
+    cb=document.createElement('button');
+    cb.className='copy-btn';
+    cb.id=type+'-copy';
+    cb.textContent='Kopieren';
+    cb.onclick=()=>{navigator.clipboard.writeText(text).then(()=>{cb.textContent='Kopiert ✓';setTimeout(()=>cb.textContent='Kopieren',2000);});};
+    ob.parentNode.insertBefore(cb,ob.nextSibling);
+  } else {
+    cb.onclick=()=>{navigator.clipboard.writeText(text).then(()=>{cb.textContent='Kopiert ✓';setTimeout(()=>cb.textContent='Kopieren',2000);});};
+  }
+  banner.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// Clear warnings when typing
+document.addEventListener('input',function(e){
+  if(e.target.matches('input[type=text], textarea')){
+    e.target.classList.remove('warn');
+    const msg=e.target.parentElement.querySelector('.warn-msg');
+    if(msg)msg.remove();
+  }
+});
+</script>
+</body>
+</html>
