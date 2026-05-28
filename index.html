@@ -645,6 +645,10 @@ function build(type){
   }
 
   const text=buildText(type);
+
+  // Send to Claude to translate everything to dev English and format properly
+  sendPrompt('Erstelle folgendes 3rd-Level-Ticket. WICHTIG: Übersetze ALLES ins professionelle Dev-Englisch — auch wenn Felder auf Deutsch ausgefüllt sind. Formatiere sauber mit fetten Überschriften:\n\n'+text);
+
   const ob=document.getElementById(type+'-output');
   ob.textContent=text;
   ob.classList.add('visible');
@@ -671,7 +675,7 @@ document.addEventListener('input',function(e){
   }
 });
 
-async function aiFill(){
+function aiFill(){
   const refText=(document.getElementById('ref-ticket').value||'').trim();
   if(!refText){
     const err=document.getElementById('ai-error');
@@ -680,280 +684,35 @@ async function aiFill(){
     return;
   }
   document.getElementById('ai-error').style.display='none';
-  const btn=document.getElementById('ai-fill-btn');
-  const status=document.getElementById('ai-status');
-  btn.disabled=true;
-  btn.textContent='⏳ Wird analysiert...';
-  status.textContent='';
 
   // Detect active tab
   const activeTab=document.querySelector('.tab.active').textContent.trim();
   const tabMap={'PMS':'pms','PMS Reservation':'pmsres','Overbooking':'overbooking','Payment':'payment','OTA':'ota','ONE':'one','Meta':'meta','Bugfix':'bugfix','Cockpit':'cockpit','Neu':'custom'};
   const type=tabMap[activeTab]||'custom';
 
-  // Build field map per type
-  const fieldMaps={
-    pms:{
-      'pms-knr':'KNR / Service Level (number only)',
-      'pms-ver':'PMS Interface Version (V2 or V3)',
-      'pms-env':'Modules / Environment (short, e.g. Cockpit)',
-      'pms-agent':'Processed by / 2nd Level agent name',
-      'pms-problem':'Problem description in dev English (detailed)',
-      'pms-valpms':'Value that should be in PMS',
-      'pms-valcockpit':'Value that should be in Cockpit',
-      'pms-expect':'What should actually be happening (dev English)',
-      'pms-example':'Example BID / links / IDs',
-      'pms-tech':'Technical details / logs / SQL',
-      'pms-result':'Result of issue for customer summarized (dev English)',
-      'pms-1st':'1st Level agent name'
-    },
-    pmsres:{
-      'pmsres-knr':'KNR / Service Level (number only)',
-      'pmsres-ver':'PMS Interface Version',
-      'pmsres-env':'Modules / Environment',
-      'pmsres-agent':'2nd Level agent name',
-      'pmsres-problem':'Problem description in dev English',
-      'pmsres-valpms':'Value in PMS',
-      'pmsres-valcockpit':'Value in Cockpit',
-      'pmsres-correct':'What would be correct (dev English)',
-      'pmsres-wrong':'What is wrong in PMS (dev English)',
-      'pmsres-example':'Example BID / links',
-      'pmsres-tech':'Technical details',
-      'pmsres-result':'Result for customer (dev English)',
-      'pmsres-1st':'1st Level agent name'
-    },
-    overbooking:{
-      'ob-knr':'KNR / Service Level',
-      'ob-bid':'BID',
-      'ob-env':'Modules / Environment',
-      'ob-agent':'2nd Level agent name',
-      'ob-source':'Source of overbooking (IBE / OTA channel)',
-      'ob-overbid':'Overbooked BID',
-      'ob-when':'When did the overbooking happen',
-      'ob-room':'Affected room name / ID',
-      'ob-date':'Overbooked date',
-      'ob-log':'Logging link',
-      'ob-tech':'Technical details / SQL',
-      'ob-result':'Result for customer (dev English)',
-      'ob-1st':'1st Level agent name'
-    },
-    payment:{
-      'pay-knr':'KNR / Service Level',
-      'pay-prov':'Payment provider name',
-      'pay-env':'Modules / Environment',
-      'pay-agent':'2nd Level agent name',
-      'pay-cond':'Payment and cancellation condition name / ID',
-      'pay-rate':'Affected rate name / ID',
-      'pay-problem':'Problem description in dev English',
-      'pay-expect':'What should happen (dev English)',
-      'pay-example':'Example BID / links',
-      'pay-tech':'Technical details / logs',
-      'pay-result':'Result for customer (dev English)',
-      'pay-1st':'1st Level agent name'
-    },
-    ota:{
-      'ota-knr':'KNR / Service Level',
-      'ota-name':'Affected OTA name',
-      'ota-env':'Modules / Environment',
-      'ota-agent':'2nd Level agent name',
-      'ota-problem':'Problem description in dev English',
-      'ota-valota':'Value at OTA',
-      'ota-valdirs':'Value in DIRS21',
-      'ota-expect':'What should happen (dev English)',
-      'ota-example':'Example BID / links',
-      'ota-tech':'Technical details',
-      'ota-result':'Result for customer (dev English)',
-      'ota-1st':'1st Level agent name'
-    },
-    one:{
-      'one-knr':'KNR / Service Level',
-      'one-prod':'ONE product name (e.g. ONE Tracking)',
-      'one-env':'Environment',
-      'one-agent':'2nd Level agent name',
-      'one-link':'Direct link to ONE',
-      'one-bid':'BID / TOCC ID',
-      'one-problem':'Problem description in dev English',
-      'one-expect':'What should happen (dev English)',
-      'one-example':'Example BID / links',
-      'one-tech':'Technical details',
-      'one-result':'Result for customer (dev English)',
-      'one-1st':'1st Level agent name'
-    },
-    meta:{
-      'meta-knr':'KNR / Service Level',
-      'meta-env':'Modules / Environment',
-      'meta-source':'Meta source with link',
-      'meta-agent':'2nd Level agent name',
-      'meta-problem':'Problem description in dev English',
-      'meta-expect':'What should happen (dev English)',
-      'meta-example':'Example BID / links',
-      'meta-tech':'Technical details',
-      'meta-result':'Result for customer (dev English)',
-      'meta-1st':'1st Level agent name'
-    },
-    bugfix:{
-      'bug-knr':'KNR / Service Level',
-      'bug-cat':'Categorization (coding / system / user)',
-      'bug-env':'Modules / Environment',
-      'bug-agent':'2nd Level agent name',
-      'bug-problem':'Problem description + reproducibility in dev English',
-      'bug-expect':'What should happen (dev English)',
-      'bug-example':'Example and recreation steps',
-      'bug-tech':'Technical details / network console / logs',
-      'bug-result':'Result for customer (dev English)',
-      'bug-1st':'1st Level agent name'
-    },
-    cockpit:{
-      'cockpit-knr':'KNR / Service Level',
-      'cockpit-agent':'2nd Level agent name',
-      'cockpit-env':'Modules / Environment (e.g. Cockpit Reservation List)',
-      'cockpit-problem':'Problem description in dev English',
-      'cockpit-expect':'What should happen (dev English)',
-      'cockpit-example':'Example BID / links / screenshots reference',
-      'cockpit-tech':'Technical details',
-      'cockpit-result':'Result for customer (dev English)',
-      'cockpit-1st':'1st Level agent name'
-    },
-    custom:{
-      'custom-knr':'KNR / Service Level',
-      'custom-agent':'2nd Level agent name',
-      'custom-env':'Modules / Environment',
-      'custom-problem':'Problem description in dev English',
-      'custom-expect':'What should happen (dev English)',
-      'custom-example':'Example BID / links',
-      'custom-tech':'Technical details',
-      'custom-result':'Result for customer (dev English)',
-      'custom-1st':'1st Level agent name'
-    }
-  };
+  // Send to Claude chat for processing
+  sendPrompt(`Please analyze the following 1st Level support ticket and fill in the ticket builder fields. Switch to the correct tab and fill ALL fields in professional developer English — translate everything from German or any other language into English.
 
-  const fields=fieldMaps[type]||fieldMaps['custom'];
-  const fieldList=Object.entries(fields).map(([id,desc])=>`- ${id}: ${desc}`).join('\n');
-
-  const prompt=`You are a DIRS21 3rd Level Support specialist. Analyze the following 1st Level support ticket and extract information to fill in the 3rd Level ticket builder fields. 
-
-IMPORTANT:
-- All field values must be in professional dev English
-- Be concise and technical
-- If information is not available, return empty string ""
-- For KNR/BID extract only the numbers
-- For agent names extract the name as-is
-- Return ONLY valid JSON, nothing else
+Use this exact format in your response:
+TAB: [pms/pmsres/overbooking/payment/ota/one/meta/bugfix/cockpit/custom]
+FILL:
+knr: [value]
+agent: [2nd Level agent name]
+env: [environment/modules]
+problem: [problem in dev English]
+expect: [expectation in dev English]
+example: [example BIDs/links]
+tech: [technical details]
+result: [result for customer in dev English]
+1st: [1st Level agent name]
+STATUS_GLOBAL: [Yes/No/Unknown]
+STATUS_FINANCES: [Yes/No/Unknown]
+STATUS_AVAIL: [Yes/No/Unknown]
+STATUS_ESC: [Yes/No/Unknown]
+STATUS_SEC: [Yes/No/Unknown]
 
 Original 1st Level Ticket:
-${refText}
-
-Fill these fields (return JSON with field IDs as keys):
-${fieldList}
-
-Also detect the appropriate tab type from: pms, pmsres, overbooking, payment, ota, one, meta, bugfix, cockpit, custom
-And detect status values (return "Yes", "No", or "Unknown" for each):
-- status_global: Is more than one customer affected?
-- status_finances: Direct loss of revenue?
-- status_avail: Availability / bookable?
-- status_esc: Customer escalates or threatens?
-- status_sec: Security / rights / reputation issues?
-
-Return JSON format:
-{
-  "detected_type": "cockpit",
-  "fields": { "field-id": "value", ... },
-  "status": { "status_global": "Unknown", "status_finances": "No", "status_avail": "Yes", "status_esc": "No", "status_sec": "Unknown" }
-}`;
-
-  try {
-    const response=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-
-    if(!response.ok){
-      throw new Error('API Error: '+response.status);
-    }
-
-    const data=await response.json();
-    const rawText=data.content.map(i=>i.text||'').join('').trim();
-
-    // Parse JSON — strip markdown if present
-    let parsed;
-    try{
-      const clean=rawText.replace(/```json|```/g,'').trim();
-      parsed=JSON.parse(clean);
-    } catch(e){
-      throw new Error('JSON parse error: '+e.message);
-    }
-
-    // Switch to detected tab if different
-    if(parsed.detected_type && parsed.detected_type!==type){
-      sw(parsed.detected_type);
-    }
-    const activeType=parsed.detected_type||type;
-
-    // Fill fields
-    if(parsed.fields){
-      Object.entries(parsed.fields).forEach(([id,val])=>{
-        const el=document.getElementById(id);
-        if(el && val){
-          el.value=val;
-          el.classList.remove('warn');
-          const msg=el.parentElement.querySelector('.warn-msg');
-          if(msg)msg.remove();
-        }
-      });
-    }
-
-    // Fill status buttons
-    if(parsed.status){
-      const statusMap={
-        'status_global': 'global',
-        'status_finances': 'finance',
-        'status_avail': 'avail',
-        'status_esc': 'esc',
-        'status_sec': 'sec'
-      };
-      Object.entries(statusMap).forEach(([key,suffix])=>{
-        const val=parsed.status[key];
-        if(val){
-          const ynId='yn-'+activeType+'-'+suffix;
-          const ynDiv=document.getElementById(ynId);
-          if(ynDiv){
-            ynDiv.querySelectorAll('button').forEach(b=>{
-              b.style.removeProperty('background');
-              b.style.removeProperty('color');
-              b.style.removeProperty('border');
-              b.style.removeProperty('font-weight');
-              if(b.textContent===val){
-                b.style.setProperty('background','#ffffff','important');
-                b.style.setProperty('color','#000000','important');
-                b.style.setProperty('border','2px solid #000000','important');
-                b.style.setProperty('font-weight','700','important');
-              }
-            });
-          }
-        }
-      });
-    }
-
-    // Enable HubSpot button
-        
-    status.textContent='✓ Felder wurden erfolgreich ausgefüllt';
-    status.style.color='#4ade80';
-    setTimeout(()=>{status.textContent='';status.style.color='#888';},4000);
-
-  } catch(err){
-    const errDiv=document.getElementById('ai-error');
-    errDiv.style.display='block';
-    errDiv.textContent='Fehler beim Ausfüllen: '+err.message;
-    status.textContent='';
-  }
-
-  btn.disabled=false;
-  btn.textContent='✦ Felder automatisch ausfüllen';
+${refText}`);
 }
 
 </script>
